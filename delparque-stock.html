@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Del Parque — Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --negro: #1a1a1a;
+    --negro-medio: #2d2d2d;
+    --blanco: #ffffff;
+    --gris-fondo: #f5f5f3;
+    --gris-borde: #e0e0e0;
+    --gris-claro: #f0f0ee;
+    --gris-texto: #888888;
+    --naranja: #FF4713;
+    --naranja-claro: #fff2ee;
+    --rojo: #c62828;
+    --rojo-claro: #ffebee;
+    --verde-ok: #2e7d32;
+    --verde-claro: #e8f5e9;
+    --radio: 0px;
+    --radio-sm: 0px;
+    --sombra: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--gris-fondo);
+    color: var(--negro);
+    min-height: 100vh;
+    padding-bottom: 72px;
+  }
+
+  /* ── RAYAS decorativas ── */
+  .rayas {
+    display: flex;
+    height: 8px;
+    overflow: hidden;
+  }
+  .rayas span {
+    flex: 1;
+    background: var(--negro);
+  }
+  .rayas span:nth-child(even) {
+    background: var(--blanco);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--negro);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    padding: 16px 16px 20px;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .logo-area { display: flex; flex-direction: column; }
+  .logo-nombre {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--blanco);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    font-style: italic;
+  }
+  .logo-slogan {
+    font-size: 10px;
+    color: var(--naranja);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+  .sync-btn {
+    background: var(--naranja);
+    border: none;
+    color: var(--blanco);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: 'Raleway', sans-serif;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sync-btn:active { opacity: 0.8; }
+  .spin { display: inline-block; }
+  .spinning { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .header-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 14px;
+    letter-spacing: 0.3px;
+  }
+
+  /* MÉTRICAS HEADER */
+  .metricas {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 14px;
+  }
+  .metrica { text-align: center; padding: 0 8px; }
+  .metrica + .metrica { border-left: 1px solid rgba(255,255,255,0.1); }
+  .metrica-valor {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--blanco);
+    line-height: 1;
+  }
+  .metrica-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .metrica.alerta .metrica-valor { color: var(--naranja); }
+
+  /* ── NAV TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--blanco);
+    border-bottom: 2px solid var(--negro);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: none;
+    padding: 13px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gris-texto);
+    border: none;
+    background: none;
+    font-family: 'Raleway', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+  .tab.activo {
+    color: var(--negro);
+    border-bottom-color: var(--naranja);
+  }
+
+  /* ── BÚSQUEDA ── */
+  .busqueda-wrap { padding: 12px 16px 8px; }
+  .busqueda {
+    width: 100%;
+    padding: 11px 16px;
+    border: 2px solid var(--negro);
+    background: var(--blanco);
+    font-size: 14px;
+    font-family: 'Raleway', sans-serif;
+    color: var(--negro);
+    font-weight: 600;
+    outline: none;
+    letter-spacing: 0.3px;
+  }
+  .busqueda:focus { border-color: var(--naranja); }
+  .busqueda::placeholder { font-weight: 400; color: var(--gris-texto); }
+
+  /* ── FILTROS ── */
+  .filtro-row { display: flex; gap: 8px; padding: 0 16px 12px; }
+  .chip {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid var(--negro);
+    background: var(--blanco);
+    cursor: pointer;
+    font-family: 'Raleway', sans-serif;
+    color: var(--negro);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.1s;
+  }
+  .chip.activo-alerta { background: var(--naranja); border-color: var(--naranja); color: var(--blanco); }
+  .chip.activo-sin { background: var(--negro); border-color: var(--negro); color: var(--blanco); }
+
+  /* ── LISTA ── */
+  .lista { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; }
+
+  .card {
+    background: var(--blanco);
+    border: 1.5px solid var(--gris-borde);
+    border-left: 4px solid var(--negro);
+    padding: 13px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card.alerta { border-left-color: var(--naranja); background: #fffdf8; }
+  .card.sin-stock { border-left-color: var(--negro); background: #fafafa; }
+
+  .card-icono { font-size: 20px; flex-shrink: 0; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-nombre {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--negro);
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .card-cat {
+    font-size: 10px;
+    color: var(--gris-texto);
+    margin-top: 2px;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .card-derecha { text-align: right; flex-shrink: 0; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-ok { background: var(--negro); color: var(--blanco); }
+  .badge-alerta { background: var(--naranja); color: var(--blanco); }
+  .badge-sin { background: var(--gris-borde); color: var(--gris-texto); }
+
+  .card-precio { font-size: 11px; color: var(--gris-texto); margin-top: 4px; font-weight: 600; }
+
+  /* ── RECETAS ── */
+  .receta-card {
+    background: var(--blanco);
+    border: 1.5px solid var(--gris-borde);
+    border-left: 4px solid var(--negro);
+    padding: 13px 14px;
+    cursor: pointer;
+  }
+  .receta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .receta-nombre {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--negro);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .receta-base { font-size: 11px; color: var(--gris-texto); margin-top: 3px; font-weight: 600; }
+  .receta-cant {
+    font-size: 11px;
+    color: var(--naranja);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--blanco);
+    width: 100%;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding-bottom: 40px;
+  }
+  .modal-rayas {
+    display: flex;
+    height: 6px;
+  }
+  .modal-rayas span { flex: 1; background: var(--negro); }
+  .modal-rayas span:nth-child(even) { background: var(--naranja); }
+
+  .modal-header {
+    background: var(--negro);
+    padding: 18px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-titulo {
+    color: var(--blanco);
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+  .modal-cerrar {
+    color: var(--blanco);
+    background: rgba(255,255,255,0.15);
+    border: none;
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700;
+  }
+  .modal-base {
+    margin: 14px 16px 0;
+    background: var(--gris-claro);
+    padding: 10px 14px;
+    border-left: 3px solid var(--naranja);
+  }
+  .modal-base-txt { font-size: 12px; font-weight: 700; color: var(--negro); text-transform: uppercase; letter-spacing: 0.3px; }
+  .modal-subtitulo {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--gris-texto);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 16px 8px;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .ing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--gris-claro);
+  }
+  .ing-nombre { font-size: 13px; color: var(--negro); font-weight: 500; }
+  .ing-cant {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--naranja);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── DASHBOARD ── */
+  .dashboard { padding: 16px; }
+  .dash-section { margin-bottom: 20px; }
+  .dash-titulo {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--gris-texto);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--negro);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .valuacion-card {
+    background: var(--negro);
+    padding: 20px;
+    color: var(--blanco);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .valuacion-card::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    border: 15px solid rgba(255,71,19,0.15);
+    border-radius: 50%;
+  }
+  .valuacion-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+  .valuacion-valor {
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--blanco);
+    letter-spacing: -1px;
+    margin-top: 4px;
+  }
+  .valuacion-acento { color: var(--naranja); }
+
+  .dash-card {
+    background: var(--blanco);
+    border: 1.5px solid var(--gris-borde);
+    padding: 13px 14px;
+    margin-bottom: 6px;
+    border-left: 4px solid var(--negro);
+  }
+  .dash-cat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .dash-cat-nombre {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .dash-cat-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    text-transform: uppercase;
+  }
+  .dash-barra-wrap { height: 3px; background: var(--gris-claro); margin-top: 8px; }
+  .dash-barra { height: 3px; background: var(--negro); transition: width 0.5s; }
+  .dash-barra.warn { background: var(--naranja); }
+  .dash-barra.danger { background: var(--rojo); }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    gap: 16px;
+  }
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--gris-borde);
+    border-top-color: var(--naranja);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .loading-txt {
+    color: var(--gris-texto);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    margin: 16px;
+    padding: 20px;
+    background: var(--blanco);
+    border: 2px solid var(--negro);
+    border-left: 6px solid var(--naranja);
+    text-align: center;
+  }
+  .error-txt { color: var(--negro); font-size: 13px; line-height: 1.7; font-weight: 500; }
+
+  /* ── CONFIG API KEY ── */
+  .config-box {
+    margin: 16px;
+    padding: 20px;
+    background: var(--blanco);
+    border: 2px solid var(--negro);
+    border-top: 6px solid var(--naranja);
+  }
+  .config-titulo {
+    font-size: 14px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .config-sub {
+    font-size: 12px;
+    color: var(--gris-texto);
+    margin-bottom: 16px;
+    line-height: 1.7;
+    font-weight: 500;
+  }
+  .config-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--negro);
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .config-input:focus { border-color: var(--naranja); }
+  .config-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--negro);
+    color: var(--blanco);
+    border: none;
+    font-size: 13px;
+    font-weight: 800;
+    font-family: 'Raleway', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .config-btn:active { background: var(--naranja); }
+
+  /* ── EMPTY ── */
+  .empty {
+    text-align: center;
+    padding: 48px 32px;
+    color: var(--gris-texto);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── NAV BOTTOM ── */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--negro);
+    display: flex;
+    z-index: 100;
+    border-top: 3px solid var(--naranja);
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 11px 8px 14px;
+    border: none;
+    background: none;
+    font-family: 'Raleway', sans-serif;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: rgba(255,255,255,0.4);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.15s;
+  }
+  .nav-btn.activo { color: var(--blanco); }
+  .nav-btn.activo .nav-icono { color: var(--naranja); }
+  .nav-icono { font-size: 18px; }
+
+  /* ── MOVIMIENTOS MP ── */
+  .mp-filtros { display: flex; gap: 8px; padding: 12px 16px 8px; flex-wrap: wrap; }
+  .mp-chip {
+    padding: 5px 12px; font-size: 11px; font-weight: 700;
+    border: 2px solid var(--negro); background: var(--blanco);
+    cursor: pointer; font-family: 'Raleway', sans-serif;
+    color: var(--negro); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .mp-chip.activo { background: var(--negro); color: var(--blanco); }
+
+  .mp-card {
+    background: var(--blanco);
+    border: 1.5px solid var(--gris-borde);
+    padding: 13px 14px;
+    margin-bottom: 6px;
+  }
+  .mp-card.ingreso { border-left: 4px solid #2e7d32; }
+  .mp-card.egreso { border-left: 4px solid var(--naranja); }
+  .mp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .mp-producto { font-size: 13px; font-weight: 800; color: var(--negro); text-transform: uppercase; letter-spacing: 0.3px; flex: 1; margin-right: 8px; }
+  .mp-cant {
+    font-size: 13px; font-weight: 900;
+    padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .mp-cant.ingreso { background: #e8f5e9; color: #2e7d32; }
+  .mp-cant.egreso { background: var(--naranja-claro); color: var(--naranja); }
+  .mp-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mp-tag {
+    font-size: 10px; font-weight: 600; color: var(--gris-texto);
+    background: var(--gris-claro); padding: 2px 7px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .mp-tag.destino { background: var(--negro); color: var(--blanco); }
+  .mp-tag.vence-pronto { background: #fff3e0; color: #e65100; }
+  .mp-tag.vencido { background: var(--rojo-claro); color: var(--rojo); }
+
+  .mp-resumen {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px; padding: 12px 16px 0;
+  }
+  .mp-res-card {
+    background: var(--blanco); border: 1.5px solid var(--gris-borde);
+    padding: 12px; text-align: center;
+  }
+  .mp-res-card.verde { border-top: 3px solid #2e7d32; }
+  .mp-res-card.naranja { border-top: 3px solid var(--naranja); }
+  .mp-res-val { font-size: 20px; font-weight: 900; color: var(--negro); }
+  .mp-res-lbl { font-size: 10px; color: var(--gris-texto); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  .seccion { display: none; }
+  .seccion.activa { display: block; }
+  .contador {
+    font-size: 10px;
+    color: var(--gris-texto);
+    padding: 0 16px 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* TOGGLE SABORES/BASES */
+  .toggle {
+    display: flex;
+    margin: 12px 16px 0;
+    border: 2px solid var(--negro);
+    overflow: hidden;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: var(--blanco);
+    font-family: 'Raleway', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--gris-texto);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.1s;
+  }
+  .toggle-btn + .toggle-btn { border-left: 2px solid var(--negro); }
+  .toggle-btn.activo { background: var(--negro); color: var(--blanco); }
+
+  /* GRID MÉTRICAS DASHBOARD */
+  .metricas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .metrica-card {
+    background: var(--blanco);
+    border: 1.5px solid var(--gris-borde);
+    padding: 14px 10px;
+    text-align: center;
+    border-top: 3px solid var(--negro);
+  }
+  .metrica-card .val {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--negro);
+    line-height: 1;
+  }
+  .metrica-card .lbl {
+    font-size: 9px;
+    color: var(--gris-texto);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  .metrica-card.warn .val { color: var(--naranja); }
+  .metrica-card.warn { border-top-color: var(--naranja); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="rayas">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo-area">
+        <img src="data:image/png;base64,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" alt="Del Parque" style="height:44px;filter:invert(1) brightness(2);display:block;">
+        <span class="logo-slogan">#ESTÁBUENÍSIMO</span>
+      </div>
+      <button class="sync-btn" onclick="sincronizar()">
+        <span class="spin" id="sync-icono">↻</span> Actualizar
+      </button>
+    </div>
+    <div class="header-sub" id="fecha-sync">Conectando con tu planilla...</div>
+    <div class="metricas">
+      <div class="metrica">
+        <div class="metrica-valor" id="m-total">—</div>
+        <div class="metrica-label">Productos</div>
+      </div>
+      <div class="metrica alerta">
+        <div class="metrica-valor" id="m-alerta">—</div>
+        <div class="metrica-label">Alertas</div>
+      </div>
+      <div class="metrica alerta">
+        <div class="metrica-valor" id="m-sin">—</div>
+        <div class="metrica-label">Sin stock</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab activo" id="nav-stock" onclick="irA('stock')">📦 Stock</button>
+  <button class="tab" id="nav-recetas" onclick="irA('recetas')">🍦 Recetas</button>
+  <button class="tab" id="nav-ingreso" onclick="irA('ingreso')">⬇ Ingreso MP</button>
+  <button class="tab" id="nav-egreso" onclick="irA('egreso')">⬆ Egreso MP</button>
+  <button class="tab" id="nav-dashboard" onclick="irA('dashboard')">📊 Resumen</button>
+</div>
+
+<!-- SECCIÓN: STOCK -->
+<div id="sec-stock" class="seccion activa">
+  <div class="busqueda-wrap">
+    <input class="busqueda" type="search" placeholder="Buscar producto..." id="busqueda-stock" oninput="filtrarStock()">
+  </div>
+  <div class="filtro-row">
+    <button class="chip" id="chip-alerta" onclick="toggleFiltro('alerta')">⚠ Alertas</button>
+    <button class="chip" id="chip-sin" onclick="toggleFiltro('sin')">✕ Sin stock</button>
+  </div>
+  <div class="contador" id="contador-stock"></div>
+  <div class="lista" id="lista-stock">
+    <div class="loading"><div class="loading-spinner"></div><div class="loading-txt">Cargando stock...</div></div>
+  </div>
+</div>
+
+<!-- SECCIÓN: RECETAS -->
+<div id="sec-recetas" class="seccion">
+  <div class="toggle">
+    <button class="toggle-btn activo" id="tb-sabores" onclick="setToggle('sabores')">🍦 Sabores</button>
+    <button class="toggle-btn" id="tb-bases" onclick="setToggle('bases')">🧪 Bases</button>
+  </div>
+  <div class="busqueda-wrap">
+    <input class="busqueda" type="search" placeholder="Buscar..." id="busqueda-recetas" oninput="filtrarRecetas()">
+  </div>
+  <div class="contador" id="contador-recetas"></div>
+  <div class="lista" id="lista-recetas">
+    <div class="loading"><div class="loading-spinner"></div><div class="loading-txt">Cargando recetas...</div></div>
+  </div>
+</div>
+
+<!-- SECCIÓN: INGRESO MP -->
+<div id="sec-ingreso" class="seccion">
+  <div class="mp-resumen">
+    <div class="mp-res-card verde">
+      <div class="mp-res-val" id="ing-total">—</div>
+      <div class="mp-res-lbl">Registros</div>
+    </div>
+    <div class="mp-res-card verde">
+      <div class="mp-res-val" id="ing-productos">—</div>
+      <div class="mp-res-lbl">Productos distintos</div>
+    </div>
+  </div>
+  <div class="mp-filtros">
+    <input class="busqueda" type="search" placeholder="Buscar producto..." id="busqueda-ingreso" oninput="filtrarIngreso()" style="margin:0;flex:1;min-width:0">
+  </div>
+  <div class="contador" id="contador-ingreso"></div>
+  <div class="lista" id="lista-ingreso">
+    <div class="loading"><div class="loading-spinner"></div><div class="loading-txt">Cargando ingresos...</div></div>
+  </div>
+</div>
+
+<!-- SECCIÓN: EGRESO MP -->
+<div id="sec-egreso" class="seccion">
+  <div class="mp-resumen">
+    <div class="mp-res-card naranja">
+      <div class="mp-res-val" id="eg-total">—</div>
+      <div class="mp-res-lbl">Registros</div>
+    </div>
+    <div class="mp-res-card naranja">
+      <div class="mp-res-val" id="eg-destinos">—</div>
+      <div class="mp-res-lbl">Destinos distintos</div>
+    </div>
+  </div>
+  <div class="mp-filtros">
+    <input class="busqueda" type="search" placeholder="Buscar producto o destino..." id="busqueda-egreso" oninput="filtrarEgreso()" style="margin:0;flex:1;min-width:0">
+  </div>
+  <div class="contador" id="contador-egreso"></div>
+  <div class="lista" id="lista-egreso">
+    <div class="loading"><div class="loading-spinner"></div><div class="loading-txt">Cargando egresos...</div></div>
+  </div>
+</div>
+
+<!-- SECCIÓN: DASHBOARD -->
+<div id="sec-dashboard" class="seccion">
+  <div class="dashboard" id="dashboard-contenido">
+    <div class="loading"><div class="loading-spinner"></div><div class="loading-txt">Calculando...</div></div>
+  </div>
+</div>
+
+<!-- NAV BOTTOM -->
+<nav class="nav">
+  <button class="nav-btn activo" id="navb-stock" onclick="irA('stock')">
+    <span class="nav-icono">📦</span>Stock
+  </button>
+  <button class="nav-btn" id="navb-recetas" onclick="irA('recetas')">
+    <span class="nav-icono">🍦</span>Recetas
+  </button>
+  <button class="nav-btn" id="navb-ingreso" onclick="irA('ingreso')">
+    <span class="nav-icono">⬇</span>Ingreso
+  </button>
+  <button class="nav-btn" id="navb-egreso" onclick="irA('egreso')">
+    <span class="nav-icono">⬆</span>Egreso
+  </button>
+  <button class="nav-btn" id="navb-dashboard" onclick="irA('dashboard')">
+    <span class="nav-icono">📊</span>Resumen
+  </button>
+</nav>
+
+<!-- MODAL RECETA -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-rayas">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="modal-header">
+      <span class="modal-titulo" id="modal-titulo">—</span>
+      <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
+    </div>
+    <div id="modal-base"></div>
+    <div class="modal-subtitulo">Ingredientes</div>
+    <div id="modal-ingredientes"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const SPREADSHEET_ID = '1q-3W06plrR3yFeLrEPWaeW7AJgi0fX7Z7f7zi-pSdXg';
+const API_KEY = 'AIzaSyA-59vHiY1thZYpHc3s9zifGBRkEOeeMto';
+
+const ICONOS = {
+  'BASES':'🧪','BEBIDAS':'🍶','BOLSAS':'🛍️','CHOCOLATE':'🍫',
+  'COBERTURA':'🍬','COBERTURAS':'🍬','CUCURUCHOS':'🍦',
+  'DESCARTABLES':'📦','DULCE DE LECHE':'🥛','ETIQUETAS':'🏷️',
+  'FRUTOS SECOS':'🥜','LATAS Y PULPAS':'🥫','LIMPIEZA':'🧹',
+  'PANADERIA Y SEMBRADO':'🥐','PANADERIA':'🥐','PASTAS Y VARIEGATTOS':'🎨',
+};
+const MINIMOS = {
+  'BASES':2,'BEBIDAS':3,'CHOCOLATE':2,'COBERTURA':2,'COBERTURAS':2,
+  'CUCURUCHOS':5,'DESCARTABLES':10,'DULCE DE LECHE':5,'ETIQUETAS':50,
+  'FRUTOS SECOS':3,'LATAS Y PULPAS':3,'LIMPIEZA':1,
+  'PANADERIA Y SEMBRADO':2,'PASTAS Y VARIEGATTOS':2,
+};
+
+let todosIngresos = [];
+let todosEgresos = [];
+let todasRecetas = [];
+let filtroActivo = null;
+let modoRecetas = 'sabores';
+
+// ═══════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════
+function irA(sec) {
+  document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('activo'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
+  document.getElementById('sec-' + sec).classList.add('activa');
+  document.getElementById('nav-' + sec).classList.add('activo');
+  document.getElementById('navb-' + sec).classList.add('activo');
+  if (sec === 'dashboard') renderDashboard();
+  if (sec === 'ingreso') renderIngreso();
+  if (sec === 'egreso') renderEgreso();
+}
+
+function setToggle(modo) {
+  modoRecetas = modo;
+  document.getElementById('tb-sabores').className = 'toggle-btn' + (modo === 'sabores' ? ' activo' : '');
+  document.getElementById('tb-bases').className = 'toggle-btn' + (modo === 'bases' ? ' activo' : '');
+  filtrarRecetas();
+}
+
+// ═══════════════════════════════════════
+// FETCH
+// ═══════════════════════════════════════
+async function fetchHoja(hoja) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(hoja)}?key=${API_KEY}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Error ' + r.status);
+  return (await r.json()).values || [];
+}
+
+async function cargarDatos() {
+  if (!API_KEY) { mostrarConfigApiKey(); return; }
+  try {
+    const [stockRows, recetasRows, basesRows, ingresoRows, egresoRows] = await Promise.all([
+      fetchHoja('STOCK VALUADO'),
+      fetchHoja('PRODUCCION NUEVO'),
+      fetchHoja('BASES NUEVO'),
+      fetchHoja('IngresoMP-IN'),
+      fetchHoja('Egreso MP-IN'),
+    ]);
+    procesarStock(stockRows);
+    procesarRecetas(recetasRows, basesRows);
+    procesarIngreso(ingresoRows);
+    procesarEgreso(egresoRows);
+    renderStock();
+    filtrarRecetas();
+    actualizarMetricas();
+    document.getElementById('fecha-sync').textContent =
+      'Actualizado hoy a las ' + new Date().toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    mostrarError(e.message);
+  }
+}
+
+function procesarIngreso(rows) {
+  // Cols: Fecha | Producto | Marca | Presentacion | Cantidad | Lote | FechaVenc | Controlo | Proveedor | Observaciones
+  todosIngresos = rows.slice(1).map(r => ({
+    fecha: (r[0]||'').trim(),
+    producto: (r[1]||'').trim(),
+    marca: (r[2]||'').trim(),
+    presentacion: (r[3]||'').trim(),
+    cantidad: parseFloat(r[4]) || 0,
+    lote: (r[5]||'').trim(),
+    vencimiento: (r[6]||'').trim(),
+    controlo: (r[7]||'').trim(),
+    proveedor: (r[8]||'').trim(),
+    observaciones: (r[9]||'').trim(),
+  })).filter(r => r.producto);
+}
+
+function procesarEgreso(rows) {
+  // Cols: Fecha | Producto | Marca | Presentacion | # | Cantidad | Lote | FechaVenc | Controlo | Observaciones | Destino
+  todosEgresos = rows.slice(1).map(r => ({
+    fecha: (r[0]||'').trim(),
+    producto: (r[1]||'').trim(),
+    marca: (r[2]||'').trim(),
+    presentacion: (r[3]||'').trim(),
+    numero: (r[4]||'').trim(),
+    cantidad: parseFloat(r[5]) || 0,
+    lote: (r[6]||'').trim(),
+    vencimiento: (r[7]||'').trim(),
+    controlo: (r[8]||'').trim(),
+    observaciones: (r[9]||'').trim(),
+    destino: (r[10]||'').trim(),
+  })).filter(r => r.producto);
+}
+
+function estaVencido(fechaStr) {
+  if (!fechaStr) return false;
+  const partes = fechaStr.split('/');
+  if (partes.length < 3) return false;
+  const fecha = new Date(partes[2].length === 2 ? '20' + partes[2] : partes[2], partes[1]-1, partes[0]);
+  return fecha < new Date();
+}
+
+function venceProximo(fechaStr, dias = 60) {
+  if (!fechaStr) return false;
+  const partes = fechaStr.split('/');
+  if (partes.length < 3) return false;
+  const fecha = new Date(partes[2].length === 2 ? '20' + partes[2] : partes[2], partes[1]-1, partes[0]);
+  const limite = new Date(); limite.setDate(limite.getDate() + dias);
+  return fecha >= new Date() && fecha <= limite;
+}
+
+function renderIngreso() {
+  const q = (document.getElementById('busqueda-ingreso').value||'').toLowerCase();
+  const items = todosIngresos.filter(r =>
+    !q || r.producto.toLowerCase().includes(q) || r.proveedor.toLowerCase().includes(q) || r.marca.toLowerCase().includes(q)
+  );
+  document.getElementById('ing-total').textContent = todosIngresos.length;
+  document.getElementById('ing-productos').textContent = new Set(todosIngresos.map(r => r.producto)).size;
+  document.getElementById('contador-ingreso').textContent = items.length + ' registros';
+
+  const lista = document.getElementById('lista-ingreso');
+  if (!items.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+
+  lista.innerHTML = items.slice().reverse().map(r => {
+    const vencido = estaVencido(r.vencimiento);
+    const pronto = !vencido && venceProximo(r.vencimiento);
+    const vencTag = vencido
+      ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
+      : pronto
+      ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
+      : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
+    return `<div class="mp-card ingreso">
+      <div class="mp-header">
+        <div class="mp-producto">${r.producto}</div>
+        <span class="mp-cant ingreso">+${r.cantidad}</span>
+      </div>
+      <div class="mp-meta">
+        ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
+        ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
+        ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
+        ${r.proveedor ? `<span class="mp-tag destino">${r.proveedor}</span>` : ''}
+        ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
+        ${vencTag}
+        ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderEgreso() {
+  const q = (document.getElementById('busqueda-egreso').value||'').toLowerCase();
+  const items = todosEgresos.filter(r =>
+    !q || r.producto.toLowerCase().includes(q) || r.destino.toLowerCase().includes(q) || r.marca.toLowerCase().includes(q)
+  );
+  document.getElementById('eg-total').textContent = todosEgresos.length;
+  document.getElementById('eg-destinos').textContent = new Set(todosEgresos.map(r => r.destino).filter(Boolean)).size;
+  document.getElementById('contador-egreso').textContent = items.length + ' registros';
+
+  const lista = document.getElementById('lista-egreso');
+  if (!items.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+
+  lista.innerHTML = items.slice().reverse().map(r => {
+    const vencido = estaVencido(r.vencimiento);
+    const pronto = !vencido && venceProximo(r.vencimiento);
+    const vencTag = vencido
+      ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
+      : pronto
+      ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
+      : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
+    return `<div class="mp-card egreso">
+      <div class="mp-header">
+        <div class="mp-producto">${r.producto}</div>
+        <span class="mp-cant egreso">-${r.cantidad}</span>
+      </div>
+      <div class="mp-meta">
+        ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
+        ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
+        ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
+        ${r.destino ? `<span class="mp-tag destino">${r.destino}</span>` : ''}
+        ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
+        ${vencTag}
+        ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarIngreso() { renderIngreso(); }
+function filtrarEgreso() { renderEgreso(); }
+
+function procesarStock(rows) {
+  todosProductos = rows.slice(1).map(r => ({
+    categoria: (r[0]||'').trim(),
+    producto: (r[1]||'').trim(),
+    cantidad: parseFloat(r[2]) || 0,
+    precio: parseFloat(r[3]) || 0,
+    valuacion: parseFloat(r[4]) || 0,
+  })).filter(p => p.producto && p.categoria);
+  todosProductos.forEach(p => {
+    p.minimo = MINIMOS[p.categoria] || 1;
+    p.sinStock = p.cantidad === 0;
+    p.alerta = p.cantidad <= p.minimo;
+    p.icono = ICONOS[p.categoria] || '📋';
+  });
+}
+
+function procesarRecetas(rows, basesRows) {
+  const rm = {};
+  rows.slice(1).forEach(r => {
+    const s = (r[0]||'').trim(); if (!s) return;
+    if (!rm[s]) rm[s] = { sabor: s, base: (r[1]||'').trim(), ingredientes: [], tipo: 'sabor' };
+    if (r[2]) rm[s].ingredientes.push({ nombre: r[2], cantidad: parseFloat(r[3])||0, unidad: r[4]||'' });
+  });
+  const bm = {};
+  basesRows.slice(1).forEach(r => {
+    const b = (r[1]||'').trim(); if (!b) return;
+    if (!bm[b]) bm[b] = { sabor: b, base: 'Base de producción', ingredientes: [], tipo: 'base' };
+    if (r[2]) bm[b].ingredientes.push({ nombre: r[2], cantidad: parseFloat(r[3])||0, unidad: r[4]||'' });
+  });
+  todasRecetas = [...Object.values(rm), ...Object.values(bm)];
+}
+
+// ═══════════════════════════════════════
+// RENDER STOCK
+// ═══════════════════════════════════════
+function renderStock() {
+  const lista = document.getElementById('lista-stock');
+  const q = document.getElementById('busqueda-stock').value.toLowerCase();
+  const items = todosProductos.filter(p => {
+    const mQ = !q || p.producto.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q);
+    const mF = !filtroActivo || (filtroActivo === 'alerta' ? p.alerta : p.sinStock);
+    return mQ && mF;
+  });
+  document.getElementById('contador-stock').textContent = items.length + ' productos encontrados';
+  if (!items.length) { lista.innerHTML = '<div class="empty">Sin resultados</div>'; return; }
+  lista.innerHTML = items.map(p => {
+    const cls = p.sinStock ? 'sin-stock' : p.alerta ? 'alerta' : '';
+    const bCls = p.sinStock ? 'badge-sin' : p.alerta ? 'badge-alerta' : 'badge-ok';
+    const bTxt = p.sinStock ? 'SIN STOCK' : (p.cantidad % 1 === 0 ? p.cantidad : p.cantidad.toFixed(1));
+    const precio = p.precio ? '$' + Math.round(p.precio).toLocaleString('es-AR') : '';
+    return `<div class="card ${cls}">
+      <div class="card-icono">${p.icono}</div>
+      <div class="card-info">
+        <div class="card-nombre">${p.producto}</div>
+        <div class="card-cat">${p.categoria}</div>
+      </div>
+      <div class="card-derecha">
+        <span class="badge ${bCls}">${bTxt}</span>
+        ${precio ? `<div class="card-precio">${precio}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function filtrarStock() { renderStock(); }
+function toggleFiltro(tipo) {
+  filtroActivo = filtroActivo === tipo ? null : tipo;
+  document.getElementById('chip-alerta').className = 'chip' + (filtroActivo === 'alerta' ? ' activo-alerta' : '');
+  document.getElementById('chip-sin').className = 'chip' + (filtroActivo === 'sin' ? ' activo-sin' : '');
+  renderStock();
+}
+
+// ═══════════════════════════════════════
+// RENDER RECETAS
+// ═══════════════════════════════════════
+function filtrarRecetas() {
+  const q = document.getElementById('busqueda-recetas').value.toLowerCase();
+  const fuente = todasRecetas.filter(r => r.tipo === (modoRecetas === 'sabores' ? 'sabor' : 'base'));
+  const items = fuente.filter(r => !q || r.sabor.toLowerCase().includes(q));
+  window._recetasFiltradas = items;
+  const lista = document.getElementById('lista-recetas');
+  document.getElementById('contador-recetas').textContent = items.length + ' recetas encontradas';
+  if (!items.length) { lista.innerHTML = '<div class="empty">Sin resultados</div>'; return; }
+  lista.innerHTML = items.map((r, i) => `
+    <div class="receta-card" onclick="abrirReceta(${i})">
+      <div class="receta-header">
+        <div>
+          <div class="receta-nombre">${r.tipo === 'base' ? '🧪 ' : '🍦 '}${r.sabor}</div>
+          <div class="receta-base">${r.base}</div>
+        </div>
+        <div class="receta-cant">${r.ingredientes.length} ing. →</div>
+      </div>
+    </div>`).join('');
+}
+
+function abrirReceta(i) {
+  const r = window._recetasFiltradas[i];
+  document.getElementById('modal-titulo').textContent = r.sabor;
+  document.getElementById('modal-base').innerHTML = r.base !== 'Base de producción'
+    ? `<div class="modal-base"><div class="modal-base-txt">Base: ${r.base}</div></div>` : '';
+  document.getElementById('modal-ingredientes').innerHTML = r.ingredientes.length
+    ? r.ingredientes.map(ing =>
+        `<div class="ing-row">
+          <span class="ing-nombre">${ing.nombre}</span>
+          <span class="ing-cant">${ing.cantidad % 1 === 0 ? ing.cantidad : ing.cantidad.toFixed(1)} ${ing.unidad}</span>
+        </div>`).join('')
+    : '<div class="empty">Sin ingredientes cargados</div>';
+  document.getElementById('modal-overlay').classList.add('visible');
+}
+function cerrarModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function renderDashboard() {
+  if (!todosProductos.length) return;
+  const total = todosProductos.length;
+  const sinStock = todosProductos.filter(p => p.sinStock).length;
+  const conAlerta = todosProductos.filter(p => p.alerta && !p.sinStock).length;
+  const valuacion = todosProductos.reduce((s, p) => s + p.valuacion, 0);
+  const valStr = '$' + Math.round(valuacion).toLocaleString('es-AR');
+  const cats = [...new Set(todosProductos.map(p => p.categoria))].sort();
+  const catData = cats.map(c => {
+    const prods = todosProductos.filter(p => p.categoria === c);
+    const alertas = prods.filter(p => p.alerta).length;
+    const pct = Math.round((alertas / prods.length) * 100);
+    return { c, total: prods.length, alertas, pct };
+  }).sort((a, b) => b.pct - a.pct);
+
+  document.getElementById('dashboard-contenido').innerHTML = `
+    <div class="valuacion-card">
+      <div class="valuacion-label">Valuación total del stock</div>
+      <div class="valuacion-valor">${valStr.replace('$', '<span class="valuacion-acento">$</span>')}</div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-titulo">Resumen general</div>
+      <div class="metricas-grid">
+        <div class="metrica-card"><div class="val">${total}</div><div class="lbl">Productos</div></div>
+        <div class="metrica-card warn"><div class="val">${conAlerta}</div><div class="lbl">Alertas</div></div>
+        <div class="metrica-card warn"><div class="val">${sinStock}</div><div class="lbl">Sin stock</div></div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="dash-titulo">Estado por categoría</div>
+      ${catData.map(d => {
+        const cls = d.pct > 50 ? 'danger' : d.pct > 20 ? 'warn' : '';
+        const color = d.pct > 50 ? '#c62828' : d.pct > 20 ? '#FF4713' : '#1a1a1a';
+        const bg = d.pct > 50 ? '#ffebee' : d.pct > 20 ? '#fff2ee' : '#f0f0ee';
+        return `<div class="dash-card">
+          <div class="dash-cat-row">
+            <span class="dash-cat-nombre">${ICONOS[d.c]||'📋'} ${d.c}</span>
+            <span class="dash-cat-badge" style="background:${bg};color:${color}">${d.alertas}/${d.total}</span>
+          </div>
+          <div class="dash-barra-wrap">
+            <div class="dash-barra ${cls}" style="width:${d.pct}%"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function actualizarMetricas() {
+  document.getElementById('m-total').textContent = todosProductos.length;
+  document.getElementById('m-alerta').textContent = todosProductos.filter(p => p.alerta && !p.sinStock).length;
+  document.getElementById('m-sin').textContent = todosProductos.filter(p => p.sinStock).length;
+}
+
+// ═══════════════════════════════════════
+// SYNC / API KEY / ERROR
+// ═══════════════════════════════════════
+function sincronizar() {
+  const icono = document.getElementById('sync-icono');
+  icono.classList.add('spinning');
+  cargarDatos().finally(() => icono.classList.remove('spinning'));
+}
+
+function mostrarConfigApiKey() {
+  document.getElementById('lista-stock').innerHTML = `
+    <div class="config-box">
+      <div class="config-titulo">🔑 Conectar Google Sheets</div>
+      <div class="config-sub">
+        Pegá tu API Key de Google acá abajo para conectar la planilla de Del Parque en tiempo real.
+      </div>
+      <input class="config-input" type="text" id="api-key-input" placeholder="AIzaSy...">
+      <button class="config-btn" onclick="guardarApiKey()">Conectar planilla</button>
+    </div>`;
+  document.getElementById('lista-recetas').innerHTML = '';
+}
+
+function guardarApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val) return;
+  API_KEY = val;
+  localStorage.setItem('delparque_api_key', val);
+  sincronizar();
+}
+
+function mostrarError(msg) {
+  document.getElementById('lista-stock').innerHTML = `
+    <div class="error-box">
+      <div class="error-txt">
+        ⚠️ No se pudo conectar con Google Sheets.<br><br>
+        <strong>${msg}</strong><br><br>
+        Verificá que la API Key sea correcta y que la planilla sea pública.
+      </div>
+      <button class="config-btn" style="margin-top:12px;width:100%" onclick="localStorage.removeItem('delparque_api_key');location.reload()">
+        Cambiar API Key
+      </button>
+    </div>`;
+  document.getElementById('fecha-sync').textContent = 'Error de conexión';
+}
+
+// INICIO
+cargarDatos();
+</script>
+</body>
+</html>
