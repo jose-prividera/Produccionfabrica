@@ -851,7 +851,7 @@
 // CONFIG
 // ═══════════════════════════════════════
 const SPREADSHEET_ID = '1q-3W06plrR3yFeLrEPWaeW7AJgi0fX7Z7f7zi-pSdXg';
-const API_KEY = 'AIzaSyA-59vHiY1thZYpHc3s9zifGBRkEOeeMto';
+let API_KEY = localStorage.getItem('delparque_api_key') || '';
 
 const ICONOS = {
   'BASES':'🧪','BEBIDAS':'🍶','BOLSAS':'🛍️','CHOCOLATE':'🍫',
