@@ -848,10 +848,11 @@
 
 <script>
 // ═══════════════════════════════════════
-// CONFIG
+// CONFIG — Supabase
 // ═══════════════════════════════════════
-const SPREADSHEET_ID = '1q-3W06plrR3yFeLrEPWaeW7AJgi0fX7Z7f7zi-pSdXg';
-let API_KEY = localStorage.getItem('delparque_api_key') || '';
+const SUPABASE_URL    = 'https://pjrjasburffyellsyumn.supabase.co';
+const SUPABASE_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqcmphc2J1cmZmeWVsbHN5dW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MTMxMzMsImV4cCI6MjA5NTQ4OTEzM30.qU0ctPv3xVInTseMcUI_aOxHDVsJ3ylxQHq81f2Q5Yo';
+const SUPABASE_SCHEMA = 'del_parque';
 
 const ICONOS = {
   'BASES':'🧪','BEBIDAS':'🍶','BOLSAS':'🛍️','CHOCOLATE':'🍫',
@@ -896,29 +897,34 @@ function setToggle(modo) {
 }
 
 // ═══════════════════════════════════════
-// FETCH
+// FETCH — Supabase
 // ═══════════════════════════════════════
-async function fetchHoja(hoja) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(hoja)}?key=${API_KEY}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('Error ' + r.status);
-  return (await r.json()).values || [];
+async function fetchTabla(tabla, params = '') {
+  const url = `${SUPABASE_URL}/rest/v1/${tabla}?select=*${params}&limit=10000`;
+  const r = await fetch(url, {
+    headers: {
+      'apikey':         SUPABASE_KEY,
+      'Authorization':  'Bearer ' + SUPABASE_KEY,
+      'Accept-Profile': SUPABASE_SCHEMA
+    }
+  });
+  if (!r.ok) throw new Error('Error ' + r.status + ' en tabla ' + tabla);
+  return await r.json();
 }
 
 async function cargarDatos() {
-  if (!API_KEY) { mostrarConfigApiKey(); return; }
   try {
-    const [stockRows, recetasRows, basesRows, ingresoRows, egresoRows] = await Promise.all([
-      fetchHoja('STOCK VALUADO'),
-      fetchHoja('PRODUCCION NUEVO'),
-      fetchHoja('BASES NUEVO'),
-      fetchHoja('IngresoMP-IN'),
-      fetchHoja('Egreso MP-IN'),
+    const [stock, recetas, bases, ingresos, egresos] = await Promise.all([
+      fetchTabla('stock_valuado'),
+      fetchTabla('produccion_nuevo'),
+      fetchTabla('bases_nuevo'),
+      fetchTabla('ingresomp_in', '&order=fecha_ingreso.desc'),
+      fetchTabla('egreso_mp_in', '&order=fecha_egreso.desc'),
     ]);
-    procesarStock(stockRows);
-    procesarRecetas(recetasRows, basesRows);
-    procesarIngreso(ingresoRows);
-    procesarEgreso(egresoRows);
+    procesarStock(stock);
+    procesarRecetas(recetas, bases);
+    procesarIngreso(ingresos);
+    procesarEgreso(egresos);
     renderStock();
     filtrarRecetas();
     actualizarMetricas();
@@ -930,36 +936,43 @@ async function cargarDatos() {
 }
 
 function procesarIngreso(rows) {
-  // Cols: Fecha | Producto | Marca | Presentacion | Cantidad | Lote | FechaVenc | Controlo | Proveedor | Observaciones
-  todosIngresos = rows.slice(1).map(r => ({
-    fecha: (r[0]||'').trim(),
-    producto: (r[1]||'').trim(),
-    marca: (r[2]||'').trim(),
-    presentacion: (r[3]||'').trim(),
-    cantidad: parseFloat(r[4]) || 0,
-    lote: (r[5]||'').trim(),
-    vencimiento: (r[6]||'').trim(),
-    controlo: (r[7]||'').trim(),
-    proveedor: (r[8]||'').trim(),
-    observaciones: (r[9]||'').trim(),
+  todosIngresos = rows.map(r => ({
+    fecha:         (r.fecha_ingreso    ||'').trim(),
+    producto:      (r.producto_ingresado||'').trim(),
+    marca:         (r.marca            ||'').trim(),
+    presentacion:  (r.presentacion     ||'').trim(),
+    cantidad:      parseFloat(r.cantidad_ingresada) || 0,
+    lote:          (r.lote_n           ||'').trim(),
+    vencimiento:   formatFecha(r.fecha_vencimiento),
+    controlo:      (r.controlo         ||'').trim(),
+    proveedor:     (r.proveedor        ||'').trim(),
+    observaciones: (r.observaciones    ||'').trim(),
   })).filter(r => r.producto);
 }
 
 function procesarEgreso(rows) {
-  // Cols: Fecha | Producto | Marca | Presentacion | # | Cantidad | Lote | FechaVenc | Controlo | Observaciones | Destino
-  todosEgresos = rows.slice(1).map(r => ({
-    fecha: (r[0]||'').trim(),
-    producto: (r[1]||'').trim(),
-    marca: (r[2]||'').trim(),
-    presentacion: (r[3]||'').trim(),
-    numero: (r[4]||'').trim(),
-    cantidad: parseFloat(r[5]) || 0,
-    lote: (r[6]||'').trim(),
-    vencimiento: (r[7]||'').trim(),
-    controlo: (r[8]||'').trim(),
-    observaciones: (r[9]||'').trim(),
-    destino: (r[10]||'').trim(),
+  todosEgresos = rows.map(r => ({
+    fecha:         (r.fecha_egreso       ||'').trim(),
+    producto:      (r.producto_entregado ||'').trim(),
+    marca:         (r.marca              ||'').trim(),
+    presentacion:  (r.presentacion       ||'').trim(),
+    numero:        '',
+    cantidad:      parseFloat(r.cantidad_enviada) || 0,
+    lote:          (r.lote_n             ||'').trim(),
+    vencimiento:   formatFecha(r.fecha_vencimiento),
+    controlo:      (r.controlo           ||'').trim(),
+    observaciones: (r.observaciones      ||'').trim(),
+    destino:       (r.destino            ||'').trim(),
   })).filter(r => r.producto);
+}
+
+// Convierte yyyy-mm-dd → dd/mm/yyyy para mostrar y comparar
+function formatFecha(iso) {
+  if (!iso) return '';
+  const s = iso.toString().trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1];
+  return s;
 }
 
 function estaVencido(fechaStr) {
@@ -1059,12 +1072,12 @@ function filtrarIngreso() { renderIngreso(); }
 function filtrarEgreso() { renderEgreso(); }
 
 function procesarStock(rows) {
-  todosProductos = rows.slice(1).map(r => ({
-    categoria: (r[0]||'').trim(),
-    producto: (r[1]||'').trim(),
-    cantidad: parseFloat(r[2]) || 0,
-    precio: parseFloat(r[3]) || 0,
-    valuacion: parseFloat(r[4]) || 0,
+  todosProductos = rows.map(r => ({
+    categoria: (r.categoria||'').trim(),
+    producto:  (r.producto||'').trim(),
+    cantidad:  parseFloat(r.cantidad) || 0,
+    precio:    parseFloat(r.precio)   || 0,
+    valuacion: parseFloat(r.valuacion)|| 0,
   })).filter(p => p.producto && p.categoria);
   todosProductos.forEach(p => {
     p.minimo = MINIMOS[p.categoria] || 1;
@@ -1076,16 +1089,16 @@ function procesarStock(rows) {
 
 function procesarRecetas(rows, basesRows) {
   const rm = {};
-  rows.slice(1).forEach(r => {
-    const s = (r[0]||'').trim(); if (!s) return;
-    if (!rm[s]) rm[s] = { sabor: s, base: (r[1]||'').trim(), ingredientes: [], tipo: 'sabor' };
-    if (r[2]) rm[s].ingredientes.push({ nombre: r[2], cantidad: parseFloat(r[3])||0, unidad: r[4]||'' });
+  rows.forEach(r => {
+    const s = (r.sabores||'').trim(); if (!s) return;
+    if (!rm[s]) rm[s] = { sabor: s, base: (r.base||'').trim(), ingredientes: [], tipo: 'sabor' };
+    if (r.ingrediente) rm[s].ingredientes.push({ nombre: r.ingrediente, cantidad: parseFloat(r.q_base)||0, unidad: r.um_base||'' });
   });
   const bm = {};
-  basesRows.slice(1).forEach(r => {
-    const b = (r[1]||'').trim(); if (!b) return;
+  basesRows.forEach(r => {
+    const b = (r.ingrediente||'').trim(); if (!b) return;
     if (!bm[b]) bm[b] = { sabor: b, base: 'Base de producción', ingredientes: [], tipo: 'base' };
-    if (r[2]) bm[b].ingredientes.push({ nombre: r[2], cantidad: parseFloat(r[3])||0, unidad: r[4]||'' });
+    if (r.q_x) bm[b].ingredientes.push({ nombre: r.q_x, cantidad: parseFloat(r.um)||0, unidad: '' });
   });
   todasRecetas = [...Object.values(rm), ...Object.values(bm)];
 }
@@ -1238,37 +1251,16 @@ function sincronizar() {
   cargarDatos().finally(() => icono.classList.remove('spinning'));
 }
 
-function mostrarConfigApiKey() {
-  document.getElementById('lista-stock').innerHTML = `
-    <div class="config-box">
-      <div class="config-titulo">🔑 Conectar Google Sheets</div>
-      <div class="config-sub">
-        Pegá tu API Key de Google acá abajo para conectar la planilla de Del Parque en tiempo real.
-      </div>
-      <input class="config-input" type="text" id="api-key-input" placeholder="AIzaSy...">
-      <button class="config-btn" onclick="guardarApiKey()">Conectar planilla</button>
-    </div>`;
-  document.getElementById('lista-recetas').innerHTML = '';
-}
-
-function guardarApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  if (!val) return;
-  API_KEY = val;
-  localStorage.setItem('delparque_api_key', val);
-  sincronizar();
-}
-
 function mostrarError(msg) {
   document.getElementById('lista-stock').innerHTML = `
     <div class="error-box">
       <div class="error-txt">
-        ⚠️ No se pudo conectar con Google Sheets.<br><br>
+        ⚠️ No se pudo conectar con Supabase.<br><br>
         <strong>${msg}</strong><br><br>
-        Verificá que la API Key sea correcta y que la planilla sea pública.
+        Verificá que el schema esté expuesto y los permisos del rol anon estén configurados.
       </div>
-      <button class="config-btn" style="margin-top:12px;width:100%" onclick="localStorage.removeItem('delparque_api_key');location.reload()">
-        Cambiar API Key
+      <button class="config-btn" style="margin-top:12px;width:100%" onclick="cargarDatos()">
+        Reintentar
       </button>
     </div>`;
   document.getElementById('fecha-sync').textContent = 'Error de conexión';
