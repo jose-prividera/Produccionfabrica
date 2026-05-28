@@ -992,84 +992,127 @@ function venceProximo(fechaStr, dias = 60) {
   return fecha >= new Date() && fecha <= limite;
 }
 
+// ── Paginación ──────────────────────────────────────────────
+const PAGE_SIZE = 60;
+let paginaIngreso = 1;
+let paginaEgreso  = 1;
+let itemsIngresoFiltrados = [];
+let itemsEgresoFiltrados  = [];
+
+function cardIngreso(r) {
+  const vencido = estaVencido(r.vencimiento);
+  const pronto  = !vencido && venceProximo(r.vencimiento);
+  const vencTag = vencido
+    ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
+    : pronto
+    ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
+    : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
+  return `<div class="mp-card ingreso">
+    <div class="mp-header">
+      <div class="mp-producto">${r.producto}</div>
+      <span class="mp-cant ingreso">+${r.cantidad}</span>
+    </div>
+    <div class="mp-meta">
+      ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
+      ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
+      ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
+      ${r.proveedor ? `<span class="mp-tag destino">${r.proveedor}</span>` : ''}
+      ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
+      ${vencTag}
+      ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function cardEgreso(r) {
+  const vencido = estaVencido(r.vencimiento);
+  const pronto  = !vencido && venceProximo(r.vencimiento);
+  const vencTag = vencido
+    ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
+    : pronto
+    ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
+    : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
+  return `<div class="mp-card egreso">
+    <div class="mp-header">
+      <div class="mp-producto">${r.producto}</div>
+      <span class="mp-cant egreso">-${r.cantidad}</span>
+    </div>
+    <div class="mp-meta">
+      ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
+      ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
+      ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
+      ${r.destino ? `<span class="mp-tag destino">${r.destino}</span>` : ''}
+      ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
+      ${vencTag}
+      ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
+    </div>
+  </div>`;
+}
+
 function renderIngreso() {
   const q = (document.getElementById('busqueda-ingreso').value||'').toLowerCase();
-  const items = todosIngresos.filter(r =>
+  itemsIngresoFiltrados = todosIngresos.slice().reverse().filter(r =>
     !q || r.producto.toLowerCase().includes(q) || r.proveedor.toLowerCase().includes(q) || r.marca.toLowerCase().includes(q)
   );
+  paginaIngreso = 1;
   document.getElementById('ing-total').textContent = todosIngresos.length;
   document.getElementById('ing-productos').textContent = new Set(todosIngresos.map(r => r.producto)).size;
-  document.getElementById('contador-ingreso').textContent = items.length + ' registros';
-
+  document.getElementById('contador-ingreso').textContent = itemsIngresoFiltrados.length + ' registros';
   const lista = document.getElementById('lista-ingreso');
-  if (!items.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+  if (!itemsIngresoFiltrados.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+  const visible = itemsIngresoFiltrados.slice(0, PAGE_SIZE);
+  const hayMas  = itemsIngresoFiltrados.length > PAGE_SIZE;
+  lista.innerHTML = visible.map(cardIngreso).join('') +
+    (hayMas ? `<button onclick="cargarMasIngreso()" style="width:100%;padding:14px;background:var(--negro);color:var(--blanco);border:none;font-family:Raleway,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:6px;">
+      VER MÁS (${itemsIngresoFiltrados.length - PAGE_SIZE} restantes)
+    </button>` : '');
+}
 
-  lista.innerHTML = items.slice().reverse().map(r => {
-    const vencido = estaVencido(r.vencimiento);
-    const pronto = !vencido && venceProximo(r.vencimiento);
-    const vencTag = vencido
-      ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
-      : pronto
-      ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
-      : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
-    return `<div class="mp-card ingreso">
-      <div class="mp-header">
-        <div class="mp-producto">${r.producto}</div>
-        <span class="mp-cant ingreso">+${r.cantidad}</span>
-      </div>
-      <div class="mp-meta">
-        ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
-        ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
-        ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
-        ${r.proveedor ? `<span class="mp-tag destino">${r.proveedor}</span>` : ''}
-        ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
-        ${vencTag}
-        ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+function cargarMasIngreso() {
+  paginaIngreso++;
+  const hasta   = paginaIngreso * PAGE_SIZE;
+  const visible = itemsIngresoFiltrados.slice(0, hasta);
+  const hayMas  = itemsIngresoFiltrados.length > hasta;
+  const lista   = document.getElementById('lista-ingreso');
+  lista.innerHTML = visible.map(cardIngreso).join('') +
+    (hayMas ? `<button onclick="cargarMasIngreso()" style="width:100%;padding:14px;background:var(--negro);color:var(--blanco);border:none;font-family:Raleway,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:6px;">
+      VER MÁS (${itemsIngresoFiltrados.length - hasta} restantes)
+    </button>` : '');
 }
 
 function renderEgreso() {
   const q = (document.getElementById('busqueda-egreso').value||'').toLowerCase();
-  const items = todosEgresos.filter(r =>
+  itemsEgresoFiltrados = todosEgresos.slice().reverse().filter(r =>
     !q || r.producto.toLowerCase().includes(q) || r.destino.toLowerCase().includes(q) || r.marca.toLowerCase().includes(q)
   );
+  paginaEgreso = 1;
   document.getElementById('eg-total').textContent = todosEgresos.length;
   document.getElementById('eg-destinos').textContent = new Set(todosEgresos.map(r => r.destino).filter(Boolean)).size;
-  document.getElementById('contador-egreso').textContent = items.length + ' registros';
-
+  document.getElementById('contador-egreso').textContent = itemsEgresoFiltrados.length + ' registros';
   const lista = document.getElementById('lista-egreso');
-  if (!items.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+  if (!itemsEgresoFiltrados.length) { lista.innerHTML = '<div class="empty">Sin registros</div>'; return; }
+  const visible = itemsEgresoFiltrados.slice(0, PAGE_SIZE);
+  const hayMas  = itemsEgresoFiltrados.length > PAGE_SIZE;
+  lista.innerHTML = visible.map(cardEgreso).join('') +
+    (hayMas ? `<button onclick="cargarMasEgreso()" style="width:100%;padding:14px;background:var(--negro);color:var(--blanco);border:none;font-family:Raleway,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:6px;">
+      VER MÁS (${itemsEgresoFiltrados.length - PAGE_SIZE} restantes)
+    </button>` : '');
+}
 
-  lista.innerHTML = items.slice().reverse().map(r => {
-    const vencido = estaVencido(r.vencimiento);
-    const pronto = !vencido && venceProximo(r.vencimiento);
-    const vencTag = vencido
-      ? `<span class="mp-tag vencido">VENCIDO ${r.vencimiento}</span>`
-      : pronto
-      ? `<span class="mp-tag vence-pronto">Vence ${r.vencimiento}</span>`
-      : r.vencimiento ? `<span class="mp-tag">Vence ${r.vencimiento}</span>` : '';
-    return `<div class="mp-card egreso">
-      <div class="mp-header">
-        <div class="mp-producto">${r.producto}</div>
-        <span class="mp-cant egreso">-${r.cantidad}</span>
-      </div>
-      <div class="mp-meta">
-        ${r.fecha ? `<span class="mp-tag">${r.fecha}</span>` : ''}
-        ${r.marca ? `<span class="mp-tag">${r.marca}</span>` : ''}
-        ${r.presentacion ? `<span class="mp-tag">${r.presentacion}</span>` : ''}
-        ${r.destino ? `<span class="mp-tag destino">${r.destino}</span>` : ''}
-        ${r.lote ? `<span class="mp-tag">Lote: ${r.lote}</span>` : ''}
-        ${vencTag}
-        ${r.observaciones ? `<span class="mp-tag">${r.observaciones}</span>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+function cargarMasEgreso() {
+  paginaEgreso++;
+  const hasta   = paginaEgreso * PAGE_SIZE;
+  const visible = itemsEgresoFiltrados.slice(0, hasta);
+  const hayMas  = itemsEgresoFiltrados.length > hasta;
+  const lista   = document.getElementById('lista-egreso');
+  lista.innerHTML = visible.map(cardEgreso).join('') +
+    (hayMas ? `<button onclick="cargarMasEgreso()" style="width:100%;padding:14px;background:var(--negro);color:var(--blanco);border:none;font-family:Raleway,sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:6px;">
+      VER MÁS (${itemsEgresoFiltrados.length - hasta} restantes)
+    </button>` : '');
 }
 
 function filtrarIngreso() { renderIngreso(); }
-function filtrarEgreso() { renderEgreso(); }
+function filtrarEgreso()  { renderEgreso(); }
 
 function procesarStock(rows) {
   todosProductos = rows.map(r => ({
